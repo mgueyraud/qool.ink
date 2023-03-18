@@ -4,7 +4,7 @@ import { Form, Link, useActionData, useTransition } from "@remix-run/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import invariant from "tiny-invariant";
-import { Button, Input, Label } from "~/components";
+import { Button, Input, Label } from "~/components/ui";
 import {
   createUser,
   createUserSession,
@@ -20,11 +20,13 @@ export async function loader({ request }: LoaderArgs) {
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
+  const name = formData.get("name");
   const email = formData.get("email");
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
 
   invariant(typeof email === "string", "Email is required");
+  invariant(typeof name === "string", "Name is required");
   invariant(typeof password === "string", "Password is required");
   invariant(
     typeof confirmPassword === "string",
@@ -35,11 +37,17 @@ export async function action({ request }: ActionArgs) {
     email: string | null;
     password: string | null;
     confirmPassword: string | null;
+    name: string | null;
   } = {
+    name: null,
     email: null,
     password: null,
     confirmPassword: null,
   };
+
+  if (name.length === 0) {
+    errors.name = "Please provid a name";
+  }
 
   if (!isValidEmail(email)) {
     errors.email = "The email should be valid";
@@ -50,7 +58,8 @@ export async function action({ request }: ActionArgs) {
   }
 
   if (confirmPassword !== password) {
-    errors.confirmPassword = "It's not equal to the password";
+    errors.password = "Passwords don't match";
+    errors.confirmPassword = "Passwords don't match";
   }
 
   if (Object.values(errors).find((value) => value)) {
@@ -58,7 +67,7 @@ export async function action({ request }: ActionArgs) {
   }
 
   try {
-    const user = await createUser({ email, password });
+    const user = await createUser({ email, password, name });
     return await createUserSession(user.id, "/dashboard");
   } catch (err) {
     const error = err as Error;
@@ -67,12 +76,14 @@ export async function action({ request }: ActionArgs) {
         email: error.message,
         password: null,
         confirmPassword: null,
+        name: null,
       },
     });
   }
 }
 
 interface SignupFormCollections extends HTMLFormControlsCollection {
+  name?: HTMLInputElement;
   email?: HTMLInputElement;
   password?: HTMLInputElement;
   confirmPassword?: HTMLInputElement;
@@ -89,7 +100,12 @@ export default function SignUp() {
 
   useEffect(() => {
     if (!data) {
-      formRef.current?.elements.email?.focus();
+      formRef.current?.elements.name?.focus();
+      return;
+    }
+
+    if (!data.errors.name) {
+      formRef.current?.elements.name?.focus();
       return;
     }
 
@@ -119,6 +135,30 @@ export default function SignUp() {
         </p>
         <Form className="mt-6 w-full flex flex-col" method="post" ref={formRef}>
           <Label
+            htmlFor="name"
+            className={data?.errors.name ? " text-red-600" : ""}
+          >
+            Name
+          </Label>
+          <Input
+            name="name"
+            id="name"
+            type="name"
+            className={`mt-3 ${
+              data?.errors.name
+                ? " text-red-600 border-red-600 focus:ring-red-400"
+                : "mb-8"
+            }`}
+            required
+          />
+
+          {data?.errors.name ? (
+            <p className="text-sm text-red-600 mt-1 mb-8">
+              {data?.errors.name}
+            </p>
+          ) : null}
+
+          <Label
             htmlFor="email"
             className={data?.errors.email ? " text-red-600" : ""}
           >
@@ -129,7 +169,9 @@ export default function SignUp() {
             id="email"
             type="email"
             className={`mt-3 ${
-              data?.errors.email ? " text-red-600 border-red-600" : "mb-8"
+              data?.errors.email
+                ? " text-red-600 border-red-600 focus:ring-red-400"
+                : "mb-8"
             }`}
             required
           />
@@ -151,7 +193,9 @@ export default function SignUp() {
             name="password"
             type="password"
             className={`mt-3 ${
-              data?.errors.password ? " text-red-600 border-red-600" : "mb-8"
+              data?.errors.password
+                ? " text-red-600 border-red-600 focus:ring-red-400"
+                : "mb-8"
             }`}
             required
           />
@@ -173,7 +217,9 @@ export default function SignUp() {
             name="confirmPassword"
             type="password"
             className={`mt-3 ${
-              data?.errors.confirmPassword ? " text-red-600 border-red-600" : ""
+              data?.errors.confirmPassword
+                ? " text-red-600 border-red-600 focus:ring-red-400"
+                : ""
             }`}
             required
           />

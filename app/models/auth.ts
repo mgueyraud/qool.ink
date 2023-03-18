@@ -37,7 +37,7 @@ export async function getUserSession(request: Request){
 export async function requireUserSession(request: Request){
     const userId = await getUserSession(request);
 
-    if (!userId) throw redirect('/login');
+    if (!userId && !request.url.includes('login') && !request.url.includes('signup')) throw redirect('/login');
 
     return userId;
 }
@@ -52,7 +52,11 @@ export async function destroyUserSession(request: Request, redirectPath: string)
     })
 }
 
-export async function createUser({email, password}:Credentials){
+interface CreateUser extends Credentials{
+    name: string
+}
+
+export async function createUser({email, password, name}:CreateUser){
     const existingUser = await prisma.user.findFirst({ where:{ email } });
 
     if(existingUser) {
@@ -62,6 +66,7 @@ export async function createUser({email, password}:Credentials){
     const hashedPassword = await hash(password, 12);
 
     return prisma.user.create({data:{
+        name,
         email,
         password:{
             create:{
@@ -69,6 +74,11 @@ export async function createUser({email, password}:Credentials){
             }
         }
     }});
+}
+
+export async function getUser(userId: string){
+    const user = await prisma.user.findFirst({where: { id: userId }});
+    return user;
 }
 
 export async function verifyLogin({ email, password }: Credentials){
