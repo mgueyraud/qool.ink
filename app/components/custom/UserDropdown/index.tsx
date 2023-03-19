@@ -1,21 +1,5 @@
 import { Form } from "@remix-run/react";
-import {
-  ChevronDown,
-  Cloud,
-  CreditCard,
-  Github,
-  Keyboard,
-  LifeBuoy,
-  LogOut,
-  Mail,
-  MessageSquare,
-  Plus,
-  PlusCircle,
-  Settings,
-  User,
-  UserPlus,
-  Users,
-} from "lucide-react";
+import { ChevronDown, LifeBuoy, LogOut, Settings, User } from "lucide-react";
 import { useState } from "react";
 import {
   Button,
@@ -35,7 +19,13 @@ export function UserDropdown({ name }: { name: string }) {
   return (
     <DropdownMenu open={open}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" onClick={() => setOpen(true)}>
+        <Button
+          variant="ghost"
+          onClick={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") setOpen(true);
+          }}
+        >
           {name}
           <ChevronDown className="ml-2" width={15} height={15} />
         </Button>

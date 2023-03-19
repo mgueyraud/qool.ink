@@ -5,3 +5,4 @@ export { Label } from "./Label";
 export * from "./DropdownMenu";
 export * from "./Avatar";
 export { Separator } from "./Separator";
+export { Switch } from "./Switch";
